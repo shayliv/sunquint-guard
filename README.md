@@ -116,5 +116,11 @@ All state under `data/` (or `SQUINT_DATA_DIR`). Set `SQUINT_DISCARD_IMAGES=true`
 
 ---
 
+## Contributing
+
+PRs welcome. Fork the repo, create a branch, make your changes, and open a pull request against `main`.
+
+---
+
 **Shay Livni** — [shaylivni.com](https://shaylivni.com)  
 License: [MIT](LICENSE)
