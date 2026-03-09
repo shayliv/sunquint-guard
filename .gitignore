@@ -7,8 +7,8 @@ env/
 data/
 *.db
 *.log
-grumpguard-stdout.log
-grumpguard-stderr.log
+sunsquintguard-stdout.log
+sunsquintguard-stderr.log
 
 # Python
 __pycache__/

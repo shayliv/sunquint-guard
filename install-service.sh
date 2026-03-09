@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install Grump Guard monitor as a macOS LaunchAgent (runs at login, stays in background).
+# Install SunSquint Guard monitor as a macOS LaunchAgent (runs at login, stays in background).
 # Requires: venv at PROJECT_ROOT/.venv and dependencies installed.
 
 set -e
@@ -7,7 +7,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR" && pwd)"
 PYTHON="$ROOT/.venv/bin/python"
-PLIST_NAME="com.grumpguard.monitor"
+PLIST_NAME="com.sunsquintguard.monitor"
 PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_NAME.plist"
 
 if [[ ! -x "$PYTHON" ]]; then
@@ -45,9 +45,9 @@ cat > "$PLIST_PATH" << PLIST
   <key>RunAtLoad</key>
   <true/>
   <key>StandardOutPath</key>
-  <string>$ROOT_ESC/data/grumpguard-stdout.log</string>
+  <string>$ROOT_ESC/data/sunsquintguard-stdout.log</string>
   <key>StandardErrorPath</key>
-  <string>$ROOT_ESC/data/grumpguard-stderr.log</string>
+  <string>$ROOT_ESC/data/sunsquintguard-stderr.log</string>
 </dict>
 </plist>
 PLIST
@@ -57,5 +57,5 @@ launchctl unload "$PLIST_PATH" 2>/dev/null || true
 launchctl load "$PLIST_PATH"
 
 echo "Installed and started: $PLIST_PATH"
-echo "  Check: launchctl list | grep grumpguard"
-echo "  Logs:  $ROOT/data/squint.log and data/grumpguard-stdout.log"
+echo "  Check: launchctl list | grep sunsquintguard"
+echo "  Logs:  $ROOT/data/squint.log and data/sunsquintguard-stdout.log"

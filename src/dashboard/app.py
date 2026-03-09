@@ -86,7 +86,7 @@ def api_stats():
 
 @app.route("/api/report")
 def api_report():
-    """Daily grumpiness report: summary + optional export format (json or md)."""
+    """Daily squint report: summary + optional export format (json or md)."""
     date_str = request.args.get("date")
     if not date_str:
         date_str = datetime.now().strftime("%Y-%m-%d")
@@ -107,7 +107,7 @@ def api_report():
     }
     if fmt == "md":
         lines = [
-            f"# Grumpiness Report – {date_str}",
+            f"# SunSquint Report – {date_str}",
             "",
             f"- **Samples:** {report['samples']}",
             f"- **Average score:** {report['average_score']}",

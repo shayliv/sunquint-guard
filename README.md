@@ -1,105 +1,78 @@
-# Grump Guard
+# SunSquint Guard
 
-**A lightweight macOS app that watches your face and nudges you when you’re squinting at the screen.**  
-Periodically captures a frame from your built-in webcam, detects your face, and scores how “squinted” your expression is (0–100). All processing runs **locally**; no images are uploaded.
+Lightweight macOS daemon that samples your webcam, runs on-device face detection, and scores squint (0–100). All processing is local; no images leave the machine. You set a resting-face baseline so 0 is your normal; optional notifications when the score crosses a threshold.
 
-**Open source** — use it for your own needs; modify and share as you like (MIT).
+MIT licensed.
 
 ---
 
 ## Features
 
-- **Local-only** — Face detection and scoring on your machine; no cloud, no accounts.
-- **Calibrated to you** — Set your resting face as baseline so **0 = your normal**; scores reflect deviation from that.
-- **Gentle reminders** — Optional macOS notifications when your squint score crosses a threshold.
-- **Dashboard** — Timeline, hourly averages, peak moments, and snapshots; export reports as Markdown or JSON.
-- **Privacy-friendly** — Option to discard captured images after analysis (`SQUINT_DISCARD_IMAGES=true`).
+- **Local-only** — Face detection and scoring on-device; no cloud, no accounts.
+- **Baseline calibration** — Resting face = 0; scores are deviation from your baseline.
+- **Notifications** — Optional macOS alerts when score exceeds a threshold.
+- **Dashboard** — Timeline, hourly averages, peak moments, snapshots; export as Markdown or JSON.
+- **Privacy** — `SQUINT_DISCARD_IMAGES=true` to drop frames after analysis.
 
 ---
 
 ## Requirements
 
-- **macOS**, Python 3.10+
-- **terminal-notifier** for macOS notifications: `brew install terminal-notifier`
-- Camera permission for the process running the monitor (Terminal or the app you launch it from)
+- macOS, Python 3.10+
+- `terminal-notifier` for notifications: `brew install terminal-notifier`
+- Camera permission for the process running the monitor
 
 ---
 
-## Quick start
+## Quick Start
 
 ```bash
-git clone https://github.com/yourusername/grump-guard.git
-cd grump-guard
+git clone https://github.com/yourusername/sunsquint-guard.git
+cd sunsquint-guard
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-On first run, the Face Landmarker model is downloaded once to `data/face_landmarker.task` (~10 MB).
+First run downloads the MediaPipe Face Landmarker to `data/face_landmarker.task` (~10 MB).
 
-**Run the background monitor** (capture every 3–5 minutes, log, notify):
+**Monitor** (periodic capture, log, notify):
 
 ```bash
 .venv/bin/python -m monitor
 ```
 
-Run from the project root. Press `Ctrl+C` to stop.
+From project root. `Ctrl+C` to stop.
 
-**Run the dashboard** (timeline, stats, export):
+**Dashboard** (stats, export):
 
 ```bash
 .venv/bin/python -m dashboard
 ```
 
-Then open **http://127.0.0.1:5050** in your browser.
+Open http://127.0.0.1:5050
 
 ---
 
-## UI at a glance
+## UI
 
-### Dashboard (`/`)
-
-Single-page view with date picker and export buttons. Summary cards show **samples count**, **average score**, and **% time looking at screen**. Two charts: **score over time** (line) and **average per hour** (bar). A table lists **peak squint moments** with thumbnails and mood; below that, a **snapshots grid** of captured frames for the day.
+**Dashboard (`/`)** — Date picker, export, summary cards (sample count, average score, % time on screen), score-over-time and hourly-average charts, peak moments table with thumbnails, snapshots grid.
 
 ![Dashboard](docs/screenshots/s1.png)
-
 ![Dashboard charts and peaks](docs/screenshots/s2.png)
+![Dashboard snapshots](docs/screenshots/s3.png)
 
-### Live view (`/live`)
+**Live (`/live`)** — Webcam stream with live score; “Set as resting baseline” to define 0.
 
-Camera stream with live score overlay. One button: **Set as resting baseline** — relax your face and click to define 0 for future scores. Link back to dashboard.
-
-![Live camera and baseline](docs/screenshots/s3.png)
+![Live camera and baseline](docs/screenshots/live1.png)
 
 ---
 
-## Install as a macOS service (LaunchAgent)
+## Technical Details
 
-Run the monitor in the background as a user service so it starts on login and survives restarts:
-
-```bash
-./install-service.sh
-```
-
-This script:
-
-1. Resolves the project root and your venv Python.
-2. Installs a LaunchAgent plist for **com.grumpguard.monitor**.
-3. Loads the agent so it starts immediately.
-
-**Uninstall:**
-
-```bash
-launchctl unload ~/Library/LaunchAgents/com.grumpguard.monitor.plist
-rm ~/Library/LaunchAgents/com.grumpguard.monitor.plist
-```
-
-**Useful commands:**
-
-- See if it’s running: `launchctl list | grep grumpguard`
-- View logs: `launchctl kickstart -k gui/$(id -u)/com.grumpguard.monitor` (restart), then check `data/squint.log` or stdout/stderr in the plist if you redirect them.
-
-The **dashboard** is not installed as a service; run it when you want to view or export data:  
-`.venv/bin/python -m dashboard`
+- **Stack:** OpenCV (capture), MediaPipe Face Landmarker (landmarks), Flask (dashboard).
+- **Storage:** SQLite + log + snapshots under `data/`; model at `data/face_landmarker.task`.
+- **Scoring:** Landmark-derived eye/brow geometry, 0–100 vs. saved baseline or built-in default.
+- **Service:** CLI by default; optional LaunchAgent for run-at-login.
 
 ---
 
@@ -108,28 +81,40 @@ The **dashboard** is not installed as a service; run it when you want to view or
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `SQUINT_INTERVAL_MIN` / `SQUINT_INTERVAL_MAX` | Seconds between captures | 180–300 |
-| `SQUINT_WARNING_THRESHOLD` | Notify when score exceeds this | 70 |
-| `SQUINT_SNAPSHOT_SCORE_THRESHOLD` | Only save a snapshot when score is above this | 60 |
-| `SQUINT_DISCARD_IMAGES` | Delete captured images after analysis | `false` |
-| `SQUINT_DATA_DIR` | Directory for DB, log, snapshots, model | `./data` |
+| `SQUINT_WARNING_THRESHOLD` | Notify when score exceeds | 70 |
+| `SQUINT_SNAPSHOT_SCORE_THRESHOLD` | Save snapshot when score above | 60 |
+| `SQUINT_DISCARD_IMAGES` | Drop frames after analysis | `false` |
+| `SQUINT_DATA_DIR` | DB, log, snapshots, model | `./data` |
 | `SQUINT_DASHBOARD_PORT` | Dashboard port | 5050 |
-| `SQUINT_DASHBOARD_HOST` | Dashboard bind address | 127.0.0.1 |
+| `SQUINT_DASHBOARD_HOST` | Bind address | 127.0.0.1 |
 
 ---
 
-## Data and privacy
+## LaunchAgent (run at login)
 
-- SQLite DB, log file, snapshots, and the Face Landmarker model live under `data/` (or `SQUINT_DATA_DIR`). Everything stays on your machine.
-- Set `SQUINT_DISCARD_IMAGES=true` to delete captured frames after analysis and notifications.
+```bash
+./install-service.sh
+```
+
+Installs `com.sunsquintguard.monitor`, loads it. Unload:
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.sunsquintguard.monitor.plist
+rm ~/Library/LaunchAgents/com.sunsquintguard.monitor.plist
+```
+
+- Status: `launchctl list | grep sunsquintguard`
+- Logs: `data/squint.log`, `data/sunsquintguard-stdout.log`
+
+Dashboard is not installed as a service; run `.venv/bin/python -m dashboard` when needed.
 
 ---
 
-## Author
+## Data & Privacy
 
-**Shay Livni** — [shaylivni.com](https://shaylivni.com)
+All state under `data/` (or `SQUINT_DATA_DIR`). Set `SQUINT_DISCARD_IMAGES=true` to delete captured frames after analysis.
 
 ---
 
-## License
-
-Open source (MIT). Use it for your own needs; modify and share as you like. See [LICENSE](LICENSE) in the repo.
+**Shay Livni** — [shaylivni.com](https://shaylivni.com)  
+License: [MIT](LICENSE)
