@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live test – Developer Squint Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f2f8;
+      --bg-card: #ffffff;
+      --text: #3d3a4a;
+      --text-muted: #7a7589;
+      --accent: #9b8dc4;
+      --accent-soft: #e8e2f0;
+      --border: #e8e4ed;
+      --shadow: 0 2px 12px rgba(61, 58, 74, 0.06);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    .header {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .header h1 { font-size: 1.35rem; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin: 0 0 0.75rem 0;
+    }
+    .hint {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin: 0 0 1rem 0;
+    }
+    #live-wrap {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+    }
+    #live-wrap img { display: block; max-width: 100%; vertical-align: top; }
+    .btn {
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.55rem 1.1rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #8a7ab3; }
+    #baseline-status { margin-left: 0.75rem; color: var(--text-muted); font-size: 0.9rem; }
+    .actions { margin-bottom: 1rem; }
+    .back-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .page-footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    .page-footer a { color: var(--accent); text-decoration: none; }
+    .page-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1>Live test</h1>
+      <p><a href="/" class="back-link">← Back to dashboard</a></p>
+    </header>
+    <div class="card">
+      <h2 class="card-title">Camera &amp; live score</h2>
+      <p class="hint">Score = <strong>eye squeezing + concentration</strong> only (0 = resting). Smiles are ignored. Relax your face, then click below to set your resting baseline.</p>
+      <div class="actions">
+        <button type="button" id="set-baseline" class="btn">Set as resting baseline</button>
+        <span id="baseline-status"></span>
+      </div>
+      <div id="live-wrap">
+        <img id="live-img" src="/api/live" alt="Live camera stream">
+      </div>
+      <p class="hint" style="margin-top: 1rem; margin-bottom: 0;">Close this tab to stop the stream. Stop the background monitor while using live view to avoid camera conflicts.</p>
+    </div>
+
+    <footer class="page-footer">
+      Made by <a href="https://shaylivni.com">Shay Livni</a> and his agents. Not medical or ergonomic advice — we’re just watching you squint.
+    </footer>
+  </div>
+  <script>
+    document.getElementById('set-baseline').addEventListener('click', async function() {
+      const status = document.getElementById('baseline-status');
+      status.textContent = 'Capturing…';
+      try {
+        const r = await fetch('/api/baseline/set', { method: 'POST' });
+        const data = await r.json();
+        if (data.ok) {
+          status.textContent = 'Baseline set. Your relaxed face is now 0.';
+        } else {
+          status.textContent = data.error || 'Failed';
+        }
+      } catch (e) {
+        status.textContent = 'Error: ' + e.message;
+      }
+    });
+  </script>
+</body>
+</html>

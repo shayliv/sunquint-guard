@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Squint Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f5f2f8;
+      --bg-card: #ffffff;
+      --text: #3d3a4a;
+      --text-muted: #7a7589;
+      --accent: #9b8dc4;
+      --accent-soft: #e8e2f0;
+      --pastel-mint: #b8e0d2;
+      --pastel-peach: #f5d4c8;
+      --pastel-lavender: #d4c8e8;
+      --pastel-sky: #b8d4e8;
+      --border: #e8e4ed;
+      --shadow: 0 2px 12px rgba(61, 58, 74, 0.06);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .nav-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    .nav-link:hover { text-decoration: underline; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .toolbar label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .toolbar input[type="date"] {
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text);
+    }
+    .btn {
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #8a7ab3; }
+    .btn-secondary {
+      background: var(--accent-soft);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: #ddd6e8; }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin: 0 0 1rem 0;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .summary-item {
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      text-align: center;
+    }
+    .summary-item .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: block;
+    }
+    .summary-item .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      background: var(--bg);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    td {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+    tr:hover td { background: var(--bg); }
+    .score-cell { font-weight: 600; color: var(--accent); }
+    .peak-thumb {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 6px;
+      display: block;
+      background: var(--border);
+    }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 700px) { .charts-row { grid-template-columns: 1fr; } }
+    .chart-container { position: relative; height: 260px; }
+    canvas { max-height: 260px; }
+
+    .snapshots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .snapshot-card {
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: box-shadow 0.2s;
+    }
+    .snapshot-card:hover { box-shadow: var(--shadow); }
+    .snapshot-card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      display: block;
+      background: var(--border);
+    }
+    .snapshot-card .info {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .snapshot-card .info strong { color: var(--accent); }
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .page-footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    .page-footer a { color: var(--accent); text-decoration: none; }
+    .page-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1>Developer Squint Monitor</h1>
+      <div class="header-actions">
+        <a href="/live" class="nav-link">Live camera &amp; score →</a>
+      </div>
+    </header>
+    <p style="margin: -0.5rem 0 1.5rem 0; color: var(--text-muted); font-size: 0.9rem;">Relax your face on the live view and set it as the resting baseline so 0 = your normal.</p>
+
+    <div class="toolbar">
+      <label for="date-picker">Date</label>
+      <input type="date" id="date-picker">
+      <button type="button" id="export-md" class="btn btn-primary">Export report (MD)</button>
+      <button type="button" id="export-json" class="btn btn-secondary">Export JSON</button>
+    </div>
+
+    <div class="card" id="summary-card">
+      <h2 class="card-title">Today at a glance</h2>
+      <div class="summary-grid" id="summary"></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="card">
+        <h2 class="card-title">Score over time</h2>
+        <div class="chart-container"><canvas id="timeline-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Average per hour</h2>
+        <div class="chart-container"><canvas id="hourly-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Peak squint moments</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px;"></th>
+              <th>Time</th>
+              <th>Score</th>
+              <th>Mood</th>
+            </tr>
+          </thead>
+          <tbody id="peak-list"></tbody>
+        </table>
+      </div>
+      <p id="peak-empty" class="empty-state" style="display: none;">No data for this day.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">Your snapshots</h2>
+      <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0 0 1rem 0;">Photos from the monitor for this day.</p>
+      <div class="snapshots-grid" id="snapshots-grid"></div>
+      <p id="snapshots-empty" class="empty-state" style="display: none;">No snapshots for this day.</p>
+    </div>
+
+    <footer class="page-footer">
+      Made by <a href="https://shaylivni.com">Shay Livni</a> and his agents. Not medical or ergonomic advice — we’re just watching you squint.
+    </footer>
+  </div>
+
+  <script>
+    const API = '';
+    let timelineChart, hourlyChart;
+
+    function today() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    const datePicker = document.getElementById('date-picker');
+    datePicker.value = today();
+    datePicker.addEventListener('change', load);
+
+    function exportReport(format) {
+      const date = datePicker.value || today();
+      window.open(`${API}/api/report?date=${date}&format=${format}`, '_blank');
+    }
+    document.getElementById('export-md').addEventListener('click', () => exportReport('md'));
+    document.getElementById('export-json').addEventListener('click', () => exportReport('json'));
+
+    const pastelColors = ['#9b8dc4', '#b8e0d2', '#f5d4c8', '#b8d4e8', '#d4c8e8'];
+
+    async function load() {
+      const date = datePicker.value || today();
+      const [scoresRes, statsRes] = await Promise.all([
+        fetch(`${API}/api/scores?from=${date} 00:00&to=${date} 23:59`),
+        fetch(`${API}/api/stats?date=${date}`)
+      ]);
+      const scores = await scoresRes.json();
+      const stats = await statsRes.json();
+
+      const labels = scores.map(s => s.ts);
+      const data = scores.map(s => s.score);
+
+      if (timelineChart) timelineChart.destroy();
+      timelineChart = new Chart(document.getElementById('timeline-chart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Score (0 = resting)',
+            data,
+            borderColor: '#9b8dc4',
+            backgroundColor: 'rgba(155, 141, 196, 0.12)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 2,
+            pointHoverRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 100, grid: { color: '#e8e4ed' }, ticks: { color: '#7a7589' } },
+            x: { grid: { display: false }, ticks: { color: '#7a7589', maxRotation: 45 } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      const hourlyObj = stats.hourly_avg || {};
+      const hours = Object.keys(hourlyObj).map(Number).sort((a, b) => a - b);
+      const hourlyLabels = hours.map(h => h + ':00');
+      const hourlyData = hours.map(h => hourlyObj[h] ?? hourlyObj[String(h)] ?? 0);
+
+      if (hourlyChart) hourlyChart.destroy();
+      hourlyChart = new Chart(document.getElementById('hourly-chart'), {
+        type: 'bar',
+        data: {
+          labels: hourlyLabels,
+          datasets: [{
+            label: 'Avg score',
+            data: hourlyData,
+            backgroundColor: 'rgba(155, 141, 196, 0.5)',
+            borderColor: '#9b8dc4',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 100, grid: { color: '#e8e4ed' }, ticks: { color: '#7a7589' } },
+            x: { grid: { display: false }, ticks: { color: '#7a7589' } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      const peaks = stats.peaks || [];
+      const tbody = document.getElementById('peak-list');
+      const peakEmpty = document.getElementById('peak-empty');
+      if (peaks.length === 0) {
+        tbody.innerHTML = '';
+        peakEmpty.style.display = 'block';
+      } else {
+        peakEmpty.style.display = 'none';
+        tbody.innerHTML = peaks.map(p => {
+          const thumb = p.snapshot_path
+            ? `<img class="peak-thumb" src="${API}/api/snapshots/${encodeURIComponent(p.snapshot_path)}" alt="">`
+            : '<span class="peak-thumb" style="display:block;width:44px;height:44px;background:var(--border);border-radius:6px;"></span>';
+          return `<tr><td>${thumb}</td><td>${p.ts}</td><td class="score-cell">${p.score}</td><td>${p.mood || '—'}</td></tr>`;
+        }).join('');
+      }
+
+      const withSnapshots = (scores || []).filter(s => s.snapshot_path);
+      const grid = document.getElementById('snapshots-grid');
+      const snapEmpty = document.getElementById('snapshots-empty');
+      if (withSnapshots.length === 0) {
+        grid.innerHTML = '';
+        snapEmpty.style.display = 'block';
+      } else {
+        snapEmpty.style.display = 'none';
+        grid.innerHTML = withSnapshots.map(s =>
+          `<div class="snapshot-card"><img src="${API}/api/snapshots/${encodeURIComponent(s.snapshot_path)}" alt="${s.ts}"><div class="info">${s.ts} · <strong>${s.score}</strong></div></div>`
+        ).join('');
+      }
+
+      document.getElementById('summary').innerHTML = [
+        `<div class="summary-item"><span class="value">${stats.count || 0}</span><span class="label">Samples</span></div>`,
+        `<div class="summary-item"><span class="value">${(stats.average_score || 0).toFixed(1)}</span><span class="label">Avg score</span></div>`
+      ].join('');
+    }
+
+    load();
+  </script>
+</body>
+</html>
